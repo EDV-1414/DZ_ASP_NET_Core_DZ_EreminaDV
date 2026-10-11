@@ -1,14 +1,32 @@
-﻿ul
-{
-	list-style:none;
+﻿ul {
+	list-style: none;
+	padding-left: 0;
 }
-input[type=checkbox]:checked + label
-{
-	color:gray;
-	text-decoration:line-through;
+
+	ul li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.25rem 0;
+	}
+
+input[type=checkbox]:checked + label {
+	color: gray;
+	text-decoration: line-through;
 }
-.statistics
-{
-	display:flex;
-	justify-content:space-between;
+
+.statistics {
+	display: flex;
+	justify-content: space-between;
+}
+
+.task-time {
+	color: #888;
+	font-size: 0.85em;
+	margin-left: auto;
+}
+
+.bulk-actions {
+	display: flex;
+	gap: 0.5rem;
 }
