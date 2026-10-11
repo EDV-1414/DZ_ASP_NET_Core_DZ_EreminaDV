@@ -1,0 +1,65 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Blazor</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="factorial">
+                <span class="bi factorial-nav-menu" aria-hidden="true"></span> Factorial
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="power">
+                <span style="font-size: 0.85em; width: 1.5em; display: inline-block; text-align: center; margin-right: 0.50rem;" aria-hidden="true">a<sup>b</sup></span> Power [ДЗ_1.1]
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="fibonacci">
+                <span style="font-size: 1em; width: 1.5em; display: inline-block; text-align: center; margin-right: 0.25rem;" aria-hidden="true">φ</span> Fibonacci [ДЗ_1.2]
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Bitcoin">
+                <span class="bi bitcoin-nav-menu" aria-hidden="true"></span> Bitcoin
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Bitcoin">
+                <span class="bi bitcoin-nav-menu-2" aria-hidden="true"></span> Bitcoin2
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Bitcoin">
+                <span class="bi bitcoin-nav-menu-3" aria-hidden="true"></span> Bitcoin3
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="weather">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            </NavLink>
+        </div>
+    </nav>
+</div>

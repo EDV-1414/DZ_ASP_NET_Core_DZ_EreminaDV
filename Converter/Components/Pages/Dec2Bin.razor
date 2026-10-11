@@ -1,0 +1,26 @@
+﻿@page "/Dec2Bin"
+@rendermode InteractiveServer
+
+<h3>Dec2Bin</h3>
+
+<div class="converter">
+	<div>
+		<label for="number">Десятичное число:</label>
+		<input	type="number"
+				id="number"
+				@bind="number" @bind:after="Calculate"
+				class="form-control"
+				/>
+		<button @onclick="Calculate" class="btn btn-primary">Перевести</button>
+	</div>
+	<div id="converter-result">
+		@if (string.IsNullOrEmpty(result))
+		{
+				<span>Введите число и нажмите «Перевести»</span>
+		}
+		else
+		{
+			@($"{number} (dec) = {result} (bin)")
+		}
+	</div>
+</div>

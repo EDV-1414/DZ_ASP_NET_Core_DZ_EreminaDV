@@ -1,0 +1,25 @@
+﻿@page "/Power"
+@rendermode InteractiveServer
+
+<h3>Power</h3>
+
+<div class="power">
+	<div>
+		<label for="number">Число:</label>
+		<input	type="number"
+				id="number"
+				@bind="number"
+				class="form-control"
+				/>
+	</div>
+	<div>
+		<label for="exponent">Степень:</label>
+		<input	type="number"
+				id="exponent"
+				@bind="exponent"
+				class="form-control"
+				/>
+	</div>
+	<button @onclick="Calculate" class="btn btn-primary">Вычислить</button>
+	<div id="power-result">@number ^ @exponent = @result</div>
+</div>
