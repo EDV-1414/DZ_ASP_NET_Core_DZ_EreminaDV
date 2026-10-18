@@ -2,6 +2,9 @@
 https://www.youtube.com/playlist?list=PLeyB6O3Us0mQ
 
 TODO:
+1. Внедрить LearningDays в страницу Create;
+
+DONE:
 0. Сделать BackUp Базы Данных (SSMS);	DONE
 1. Проверить CRUD-операции для групп;
 2. На страницах 'Index' для Направлений и групп реализовать поиск, сортировку и pagination;
