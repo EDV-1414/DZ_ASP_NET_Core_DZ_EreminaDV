@@ -2,6 +2,11 @@
 https://www.youtube.com/playlist?list=PLeyB6O3Us0mQ
 
 TODO:
+0. Сделать BackUp Базы Данных (SSMS);	DONE
+1. Проверить CRUD-операции для групп;
+2. На страницах 'Index' для Направлений и групп реализовать поиск, сортировку и pagination;
+
+DONE:
 1. На MS SQL Server импортировать Базу Данных 'VPU_521_Import';
 2. В Solution 'Blazor' добавить проект 'Academy';
 3. В проекте 'Academy' отобразить следующую информацию из Базы:

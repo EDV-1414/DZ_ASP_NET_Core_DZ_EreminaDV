@@ -14,6 +14,7 @@ namespace Academy.Models
 		public string group_name { get; set; }
 
 		[Column("direction", TypeName = "TINYINT")]
+		[ForeignKey(nameof(Direction))]
 		public int direction { get; set; }
 
 		[Column("weekdays", TypeName = "TINYINT")]
@@ -24,5 +25,8 @@ namespace Academy.Models
 
 		[Column("start_date", TypeName = "DATE")]
 		public DateOnly? start_date { get; set; }
+
+		//Navigation properties:
+		public Direction Direction { get; set; }	//Многие к одному (Direction - ОДИН)
 	}
 }
