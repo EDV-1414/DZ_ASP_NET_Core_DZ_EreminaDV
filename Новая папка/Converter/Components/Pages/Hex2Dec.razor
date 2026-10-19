@@ -1,0 +1,31 @@
+﻿@page "/Hex2Dec"
+@rendermode InteractiveServer
+
+<h3>Hex2Dec</h3>
+
+<div class="converter">
+	<div>
+		<label for="hex">Шестнадцатеричное число:</label>
+		<input	type="text"
+				id="hex"
+				@bind="hexInput" @bind:after="Calculate"
+				class="form-control"
+				placeholder="например, FF"
+				/>
+		<button @onclick="Calculate" class="btn btn-primary">Перевести</button>
+	</div>
+	<div id="converter-result">
+		@if (string.IsNullOrEmpty(result))
+		{
+				<span>Введите шестнадцатеричное число и нажмите «Перевести»</span>
+		}
+		else if (result.StartsWith("Ошибка"))
+		{
+				<span style="color: red;">@result</span>
+		}
+		else
+		{
+			@($"{hexInput} (hex) = {result} (dec)")
+		}
+	</div>
+</div>

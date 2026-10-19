@@ -1,0 +1,31 @@
+﻿@page "/Bin2Dec"
+@rendermode InteractiveServer
+
+<h3>Bin2Dec</h3>
+
+<div class="converter">
+	<div>
+		<label for="binary">Двоичное число:</label>
+		<input	type="text"
+				id="binary"
+				@bind="binaryInput" @bind:after="Calculate"
+				class="form-control"
+				placeholder="например, 1101"
+				/>
+		<button @onclick="Calculate" class="btn btn-primary">Перевести</button>
+	</div>
+	<div id="converter-result">
+		@if (string.IsNullOrEmpty(result))
+		{
+				<span>Введите двоичное число и нажмите «Перевести»</span>
+		}
+		else if (result.StartsWith("Ошибка"))
+		{
+				<span style="color: red;">@result</span>
+		}
+		else
+		{
+			@($"{binaryInput} (bin) = {result} (dec)")
+		}
+	</div>
+</div>
