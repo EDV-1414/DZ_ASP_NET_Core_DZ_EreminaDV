@@ -1,9 +1,7 @@
 ﻿@page "/directions"
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
 @using Academy2.Models
 @using Academy2.Data
-@implements IAsyncDisposable
 @inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
 
 <PageTitle>Направления</PageTitle>
@@ -13,29 +11,103 @@
     <p>
         <a href="directions/create" class="btn btn-primary">Добавить</a>
     </p>
+
+    <!-- Выпадающий список для сортировки -->
+    <div class="mb-3">
+        <label class="form-label">Сортировка:</label>
+        <select class="form-select w-auto" @bind="sortOrder">
+            <option value="name_asc">Название (А-Я)</option>
+            <option value="name_desc">Название (Я-А)</option>
+            <option value="id_asc">По ID (возрастание)</option>
+            <option value="id_desc">По ID (убывание)</option>
+        </select>
+    </div>
 </div>
 
-<!-- Убрали Pagination="pagination", оставили только Items -->
-<QuickGrid Class="table" Items="context.Directions">
-    <PropertyColumn Property="d => d.direction_name" Title="Название направления" Sortable="true" />
-    <TemplateColumn Title="Действия" Context="item">
-        <a href="@($"directions/edit?direction_id={item.direction_id}")">Edit</a> |
-        <a href="@($"directions/details?direction_id={item.direction_id}")">Details</a> |
-        <a href="@($"directions/delete?direction_id={item.direction_id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Название направления</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in PagedData)
+        {
+            <tr>
+                <td>@item.direction_name</td>
+                <td>
+                    <a href="@($"directions/edit?direction_id={item.direction_id}")">Edit</a> |
+                    <a href="@($"directions/details?direction_id={item.direction_id}")">Details</a> |
+                    <a href="@($"directions/delete?direction_id={item.direction_id}")">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
-<!-- Пагинатор сам попытается разбить данные -->
-<Paginator State="pagination" />
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div>
+        @if (currentPage > 1)
+        {
+            <a href="@($"/directions?page={currentPage - 1}")" class="btn btn-sm btn-outline-primary">&lt; Назад</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-outline-primary" disabled>&lt; Назад</button>
+        }
+
+        @if (currentPage < totalPages)
+        {
+            <a href="@($"/directions?page={currentPage + 1}")" class="btn btn-sm btn-outline-primary">Вперед &gt;</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-outline-primary" disabled>Вперед &gt;</button>
+        }
+    </div>
+    <div>
+        <span>Страница <strong>@currentPage</strong> из <strong>@totalPages</strong> (всего записей: @totalCount)</span>
+    </div>
+</div>
 
 @code {
-    private AcademyContext context = default!;
-    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageQuery { get; set; }
 
-    protected override void OnInitialized()
+    private List<Direction> allData = new();
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 1;
+    private int totalCount = 0;
+
+    // Переменная для хранения выбранной сортировки
+    private string sortOrder = "name_asc";
+
+    protected override async Task OnParametersSetAsync()
     {
-        context = DbFactory.CreateDbContext();
+        currentPage = PageQuery ?? 1;
+        if (currentPage < 1) currentPage = 1;
+
+        using var context = DbFactory.CreateDbContext();
+        var query = context.Directions.AsQueryable();
+
+        // Применяем сортировку к запросу
+        query = sortOrder switch
+        {
+            "name_desc" => query.OrderByDescending(d => d.direction_name),
+            "id_asc" => query.OrderBy(d => d.direction_id),
+            "id_desc" => query.OrderByDescending(d => d.direction_id),
+            _ => query.OrderBy(d => d.direction_name) // По умолчанию: name_asc
+        };
+
+        allData = await query.ToListAsync();
+        totalCount = allData.Count;
+        totalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private List<Direction> PagedData =>
+        allData.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 }
