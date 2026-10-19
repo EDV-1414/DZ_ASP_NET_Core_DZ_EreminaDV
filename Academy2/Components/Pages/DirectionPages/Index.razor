@@ -6,28 +6,31 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Направления</PageTitle>
 
 <div class="controls">
-    <h1>Index</h1>
-
+    <h1>Направления (Directions)</h1>
     <p>
         <a href="directions/create" class="btn btn-primary">Добавить</a>
     </p>
 </div>
 
+<!-- Убрали Pagination="pagination", оставили только Items -->
 <QuickGrid Class="table" Items="context.Directions">
-    <PropertyColumn Property="direction => direction.direction_name" />
-
-    <TemplateColumn Context="direction">
-        <a href="@($"directions/edit?direction_id={direction.direction_id}")">Edit</a> |
-        <a href="@($"directions/details?direction_id={direction.direction_id}")">Details</a> |
-        <a href="@($"directions/delete?direction_id={direction.direction_id}")">Delete</a>
+    <PropertyColumn Property="d => d.direction_name" Title="Название направления" Sortable="true" />
+    <TemplateColumn Title="Действия" Context="item">
+        <a href="@($"directions/edit?direction_id={item.direction_id}")">Edit</a> |
+        <a href="@($"directions/details?direction_id={item.direction_id}")">Details</a> |
+        <a href="@($"directions/delete?direction_id={item.direction_id}")">Delete</a>
     </TemplateColumn>
 </QuickGrid>
 
+<!-- Пагинатор сам попытается разбить данные -->
+<Paginator State="pagination" />
+
 @code {
     private AcademyContext context = default!;
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     protected override void OnInitialized()
     {
