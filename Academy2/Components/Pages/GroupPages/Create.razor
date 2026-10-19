@@ -1,0 +1,64 @@
+﻿@page "/groups/create"
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Создать группу</PageTitle>
+
+<h1>Создать</h1>
+<h2>Группа</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Group" OnValidSubmit="AddGroup" FormName="create">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+
+            <div class="mb-3">
+                <label for="group_name" class="form-label">Название группы:</label>
+                <InputText id="group_name" @bind-Value="Group.group_name" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label for="direction" class="form-label">Направление (ID):</label>
+                <InputNumber id="direction" @bind-Value="Group.direction" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label for="learning_days" class="form-label">Дни обучения:</label>
+                <InputNumber id="learning_days" @bind-Value="Group.learning_days" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label for="start_time" class="form-label">Время начала:</label>
+                <InputDate id="start_time" @bind-Value="Group.start_time" Type="InputDateType.Time" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/groups">Назад к списку</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Group Group { get; set; } = new();
+
+    private async Task AddGroup()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // Генерируем ID вручную
+        int maxId = context.Groups.Any() ? context.Groups.Max(g => g.group_id) : 0;
+        Group.group_id = maxId + 1;
+
+        context.Groups.Add(Group);
+        await context.SaveChangesAsync();
+
+        NavigationManager.NavigateTo("/groups", forceLoad: true);
+    }
+}

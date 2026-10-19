@@ -37,8 +37,14 @@
     private async Task AddDirection()
     {
         using var context = DbFactory.CreateDbContext();
+
+        // Находим максимальный ID и прибавляем 1
+        int maxId = context.Directions.Any() ? context.Directions.Max(d => d.direction_id) : 0;
+        Direction.direction_id = maxId + 1;
+
         context.Directions.Add(Direction);
         await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/directions");
+
+        NavigationManager.NavigateTo("/directions", forceLoad: true);
     }
 }
