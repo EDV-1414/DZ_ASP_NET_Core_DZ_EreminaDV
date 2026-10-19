@@ -22,7 +22,5 @@ namespace Academy2.Models
 		[Column("start_time", TypeName = "TIME(0)")]
 		public TimeOnly? start_time { get; set; }
 
-		[Column("start_date", TypeName = "DATE")]
-		public DateOnly? start_date { get; set; }
 	}
 }
