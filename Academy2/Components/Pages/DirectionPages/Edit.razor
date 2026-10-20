@@ -20,7 +20,7 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="Direction" OnValidSubmit="UpdateDirection" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary role="alert" />
                 <input type="hidden" name="Direction.direction_id" value="@Direction.direction_id" />
                 <div class="mb-3">
                     <label for="direction_name" class="form-label">direction_name:</label>

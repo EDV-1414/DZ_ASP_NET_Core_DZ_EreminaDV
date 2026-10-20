@@ -1,5 +1,7 @@
 ﻿@page "/groups"
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
 @using Academy2.Models
 @using Academy2.Data
 @inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
@@ -11,89 +13,64 @@
     <p>
         <a href="groups/create" class="btn btn-primary">Добавить</a>
     </p>
-</div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Название группы</th>
-            <th>Направление</th>
-            <th>Дни обучения</th>
-            <th>Время начала</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in PagedData)
-        {
-            <tr>
-                <td>@item.group_name</td>
-                <td>@item.direction</td>
-                <td>@item.learning_days</td>
-                <td>@item.start_time</td>
-                <td>
-                    <a href="@($"groups/edit?group_id={item.group_id}")">Edit</a> |
-                    <a href="@($"groups/details?group_id={item.group_id}")">Details</a> |
-                    <a href="@($"groups/delete?group_id={item.group_id}")">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<!-- Пагинация через ссылки (URL) -->
-<div class="d-flex justify-content-between align-items-center mt-3">
-    <div>
-        @if (currentPage > 1)
-        {
-            <a href="@($"/groups?page={currentPage - 1}")" class="btn btn-sm btn-outline-primary">&lt; Назад</a>
-        }
-        else
-        {
-            <button class="btn btn-sm btn-outline-primary" disabled>&lt; Назад</button>
-        }
-
-        @if (currentPage < totalPages)
-        {
-            <a href="@($"/groups?page={currentPage + 1}")" class="btn btn-sm btn-outline-primary">Вперед &gt;</a>
-        }
-        else
-        {
-            <button class="btn btn-sm btn-outline-primary" disabled>Вперед &gt;</button>
-        }
-    </div>
-    <div>
-        <span>Страница <strong>@currentPage</strong> из <strong>@totalPages</strong> (всего записей: @totalCount)</span>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" placeholder="Поиск по названию группы..."
+                   @bind="searchString" @bind:event="oninput" />
+        </div>
     </div>
 </div>
+
+<QuickGrid TGridItem="Group" Class="table" ItemsProvider="GetGroups" Pagination="@pagination">
+    <PropertyColumn Property="g => g.group_name" Title="Название группы" Sortable="true" />
+    <!-- Выводим название направления из связанной таблицы -->
+    <PropertyColumn Property="g => g.Direction.direction_name" Title="Направление" Sortable="true" />
+    <PropertyColumn Property="g => g.learning_days" Title="Дни обучения" Sortable="true" />
+    <PropertyColumn Property="g => g.start_time" Title="Время начала" Sortable="true" />
+
+    <TemplateColumn Title="Действия" Context="item">
+        <a href="@($"groups/edit?group_id={item.group_id}")">Edit</a> |
+        <a href="@($"groups/details?group_id={item.group_id}")">Details</a> |
+        <a href="@($"groups/delete?group_id={item.group_id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+<Paginator State="@pagination" />
 
 @code {
-    [SupplyParameterFromQuery(Name = "page")]
-    public int? PageQuery { get; set; }
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private string searchString = "";
 
-    private List<Group> allData = new();
-    private int currentPage = 1;
-    private int pageSize = 10;
-    private int totalPages = 1;
-    private int totalCount = 0;
-
-    protected override async Task OnParametersSetAsync()
+    private async ValueTask<GridItemsProviderResult<Group>> GetGroups(GridItemsProviderRequest<Group> request)
     {
-        // Берем номер страницы из URL (если есть)
-        currentPage = PageQuery ?? 1;
-        if (currentPage < 1) currentPage = 1;
-
         using var context = DbFactory.CreateDbContext();
-        allData = await context.Groups.ToListAsync();
-        totalCount = allData.Count;
 
-        totalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
+        // Включаем связанные данные (Direction), чтобы получить direction_name
+        var query = context.Groups.Include(g => g.Direction).AsQueryable();
 
-        // Если номер страницы больше максимального, ставим максимальный
-        if (currentPage > totalPages) currentPage = totalPages;
+        // Поиск
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            query = query.Where(g => g.group_name.Contains(searchString));
+        }
+
+        // Сортировка
+        if (request.SortByColumn != null)
+        {
+            query = request.ApplySorting(query);
+        }
+        else
+        {
+            query = query.OrderBy(g => g.group_id);
+        }
+
+        int totalCount = await query.CountAsync();
+        var items = await query
+            .Skip(request.StartIndex)
+            .Take(request.Count ?? 10)
+            .ToListAsync();
+
+        return GridItemsProviderResult.From(items, totalCount);
     }
-
-    // Обрезаем данные для текущей страницы
-    private List<Group> PagedData =>
-        allData.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 }
