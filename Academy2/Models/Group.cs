@@ -20,10 +20,13 @@ namespace Academy2.Models
 		[Column("weekdays", TypeName = "TINYINT")]
 		public int? learning_days { get; set; }
 
-		[Column("start_time", TypeName = "TIME(0)")]
-		public TimeOnly? start_time { get; set; }
+        [Column("start_time", TypeName = "TIME(0)")]
+        public TimeOnly? start_time { get; set; }
 
-		//Navigation properties:
-		public Direction Direction { get; set; }	//Многие к одному (Direction - ОДИН)
+        [Column("start_date", TypeName = "DATE")]
+        public DateOnly? start_date { get; set; }
+
+        //Navigation properties:
+        public Direction Direction { get; set; }	//Многие к одному (Direction - ОДИН)
 	}
 }
