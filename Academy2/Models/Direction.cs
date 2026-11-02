@@ -3,13 +3,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Academy2.Models
 {
-	public class Direction
-	{
-		[Key]
-		//Принудительное включение Автоинкремента (IDENTITY SPECIFICATION):
-		//[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-		[Column("direction_id", TypeName = "TINYINT")]
-		public int direction_id { get; set; }
-		public string direction_name { get; set; }
-	}
+    public class Direction
+    {
+        [Key]
+        //Принудительное включение Автоинкремента (IDENTITY SPECIFICATION):
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("direction_id", TypeName = "TINYINT")]
+        public int direction_id { get; set; }
+        public string direction_name { get; set; }
+
+        // Добавлено для пункта 7: количество групп и студентов (в БД не хранится)
+        [NotMapped]
+        public int groups_count { get; set; }
+
+        [NotMapped]
+        public int students_count { get; set; }
+    }
 }

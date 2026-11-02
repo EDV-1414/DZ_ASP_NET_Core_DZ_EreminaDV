@@ -27,6 +27,10 @@
 <QuickGrid TGridItem="Direction" Class="table" ItemsProvider="GetDirections" Pagination="@pagination">
     <PropertyColumn Property="d => d.direction_name" Title="Название направления" Sortable="true" />
 
+    <!-- Добавлено для пункта 7: новые колонки -->
+    <PropertyColumn Property="d => d.groups_count" Title="Групп" Sortable="true" />
+    <PropertyColumn Property="d => d.students_count" Title="Студентов" Sortable="true" />
+
     <TemplateColumn Title="Действия" Context="item">
         <a href="@($"directions/details?direction_id={item.direction_id}")">Детали</a>
     </TemplateColumn>
@@ -67,6 +71,31 @@
             .Skip(request.StartIndex)
             .Take(request.Count ?? 10)
             .ToListAsync();
+
+        // Добавлено для пункта 7: заполняем счетчики для направлений на текущей странице
+        if (items.Any())
+        {
+            var dirIds = items.Select(d => d.direction_id).ToList();
+
+            var groupCounts = await context.Groups
+                .Where(g => dirIds.Contains(g.direction))
+                .GroupBy(g => g.direction)
+                .Select(g => new { DirectionId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.DirectionId, x => x.Count);
+
+            var studentCounts = await context.Students
+                .Include(s => s.Group)
+                .Where(s => dirIds.Contains(s.Group.direction))
+                .GroupBy(s => s.Group.direction)
+                .Select(g => new { DirectionId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.DirectionId, x => x.Count);
+
+            foreach (var item in items)
+            {
+                item.groups_count = groupCounts.TryGetValue(item.direction_id, out var gc) ? gc : 0;
+                item.students_count = studentCounts.TryGetValue(item.direction_id, out var sc) ? sc : 0;
+            }
+        }
 
         return GridItemsProviderResult.From(items, totalCount);
     }

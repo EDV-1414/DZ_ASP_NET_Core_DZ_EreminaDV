@@ -10,30 +10,25 @@
 
 <div class="controls">
     <h1>Группы (Groups)</h1>
-    <p>
-        <a href="groups/create" class="btn btn-primary">Добавить новую группу</a>
-    </p>
-
+    <p><a href="groups/create" class="btn btn-primary">Добавить новую группу</a></p>
     <div class="row mb-3">
         <div class="col-md-6">
-            <input type="text" class="form-control" placeholder="Поиск по названию группы..."
-                   @bind="searchString" @bind:event="oninput" />
+            <input type="text" class="form-control" placeholder="Поиск по названию группы..." @bind="searchString" @bind:event="oninput" />
         </div>
     </div>
 </div>
 
 <QuickGrid TGridItem="Group" Class="table" ItemsProvider="GetGroups" Pagination="@pagination">
     <PropertyColumn Property="g => g.group_name" Title="Название группы" Sortable="true" />
-    <!-- Выводим название направления из связанной таблицы -->
     <PropertyColumn Property="g => g.Direction.direction_name" Title="Направление" Sortable="true" />
-    <PropertyColumn Property="g => new Week ((int)(g.learning_days ?? 0))" Title="Дни обучения" Sortable="true" />
+    <PropertyColumn Property="g => new Week((int)(g.learning_days ?? 0))" Title="Дни обучения" Sortable="true" />
     <PropertyColumn Property="g => g.start_time" Title="Время начала" Sortable="true" />
-    <PropertyColumn Property="group => group.start_date" Title="Дата начала" Sortable="true" />
+    <PropertyColumn Property="g => g.start_date" Title="Дата начала" Sortable="true" />
+    @* Добавлено для пункта 6 *@
+    <PropertyColumn Property="g => g.students_count" Title="Студентов" Sortable="true" />
 
     <TemplateColumn Title="Действия" Context="item">
-       @* <a href="@($"groups/edit?group_id={item.group_id}")">Edit</a> |*@
-        <a href="@($"groups/details?group_id={item.group_id}")">Детали</a> 
-       @* <a href="@($"groups/delete?group_id={item.group_id}")">Delete</a>*@
+        <a href="@($"groups/details?group_id={item.group_id}")">Детали</a>
     </TemplateColumn>
 </QuickGrid>
 
@@ -46,31 +41,34 @@
     private async ValueTask<GridItemsProviderResult<Group>> GetGroups(GridItemsProviderRequest<Group> request)
     {
         using var context = DbFactory.CreateDbContext();
-
-        // Включаем связанные данные (Direction), чтобы получить direction_name
         var query = context.Groups.Include(g => g.Direction).AsQueryable();
 
-        // Поиск
         if (!string.IsNullOrWhiteSpace(searchString))
-        {
             query = query.Where(g => g.group_name.Contains(searchString));
-        }
 
-        // Сортировка
         if (request.SortByColumn != null)
-        {
             query = request.ApplySorting(query);
-        }
         else
-        {
             query = query.OrderBy(g => g.group_id);
-        }
 
         int totalCount = await query.CountAsync();
-        var items = await query
-            .Skip(request.StartIndex)
-            .Take(request.Count ?? 10)
-            .ToListAsync();
+        var items = await query.Skip(request.StartIndex).Take(request.Count ?? 10).ToListAsync();
+
+        // Добавлено для пункта 6: заполняем students_count для групп на текущей странице
+        if (items.Any())
+        {
+            var groupIds = items.Select(g => g.group_id).ToList();
+            var counts = await context.Students
+                .Where(s => groupIds.Contains(s.group))
+                .GroupBy(s => s.group)
+                .Select(g => new { GroupId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.GroupId, x => x.Count);
+
+            foreach (var item in items)
+            {
+                item.students_count = counts.TryGetValue(item.group_id, out var count) ? count : 0;
+            }
+        }
 
         return GridItemsProviderResult.From(items, totalCount);
     }

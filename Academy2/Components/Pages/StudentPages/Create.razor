@@ -7,23 +7,15 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
-
 <h1>Добавление нового студента</h1>
-
 <hr />
 <div class="row">
-    <div class="">
-        <EditForm method="post" Model="Student" OnValidSubmit="AddStudent" FormName="create" Enhance>
+	<div class="">
+		<EditForm method="post" Model="Student" OnValidSubmit="AddStudent" FormName="create" Enhance>
 			<div class="human-container">
 				<div class="human-text-fields">
 					<DataAnnotationsValidator />
 					<ValidationSummary class="text-danger" role="alert" />
-					@* <div class="mb-3">
-					<span class="text-danger">*</span>
-					<label for="group" class="form-label">group:</label>
-					<InputNumber id="group" @bind-Value="Student.group" class="form-control" aria-required="true"/>
-					<ValidationMessage For="() => Student.group" class="text-danger" />
-					</div>  *@
 					<div class="mb-3">
 						<span class="text-danger">*</span>
 						<label for="last_name" class="form-label">last_name:</label>
@@ -61,30 +53,21 @@
 				</div>
 				<Photo Human="Student" AllowChange="true" />
 			</div>
-            @* <div class="mb-3">
-                <label for="photo" class="form-label">photo:</label> 
-                <InputText id="photo" @bind-Value="Student.photo" class="form-control" /> 
-                <ValidationMessage For="() => Student.photo" class="text-danger" /> 
-            </div>  *@       
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
+			<button type="submit" class="btn btn-primary">Create</button>
+		</EditForm>
+	</div>
 </div>
-
-<div>
-    <a href="/students">Back to List</a>
-</div>
+<div><a href="/students">Back to List</a></div>
 
 @code {
-    [SupplyParameterFromForm]
-    private Student Student { get; set; } = new();
+	[SupplyParameterFromForm]
+	private Student Student { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddStudent()
-    {
-        using var context = DbFactory.CreateDbContext();
-        context.Students.Add(Student);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo($"/students/details?stud_id={Student.stud_id}");
-    }
+	private async Task AddStudent()
+	{
+		using var context = DbFactory.CreateDbContext();
+		context.Students.Add(Student);
+		await context.SaveChangesAsync();
+		NavigationManager.NavigateTo($"/students/details?stud_id={Student.stud_id}");
+	}
 }

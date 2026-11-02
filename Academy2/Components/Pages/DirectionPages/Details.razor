@@ -5,9 +5,7 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Details</PageTitle>
-
 <h1>Details</h1>
-
 <div>
     <h2>Direction</h2>
     <hr />
@@ -20,7 +18,32 @@
         <dl class="row">
             <dt class="col-sm-2">direction_name</dt>
             <dd class="col-sm-10">@direction.direction_name</dd>
+
+            <!-- Добавлено для пункта 7 -->
+            <dt class="col-sm-2">Количество групп</dt>
+            <dd class="col-sm-10">@groups.Count</dd>
+            <dt class="col-sm-2">Количество студентов</dt>
+            <dd class="col-sm-10">@directionStudentsCount</dd>
         </dl>
+
+        <!-- Добавлено для пункта 5: вывод списка групп, относящихся к направлению -->
+        <h3>Группы направления</h3>
+        @if (groups == null || groups.Count == 0)
+        {
+            <p><em>По этому направлению пока нет групп.</em></p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var g in groups)
+                {
+                    <li>
+                        <a href="@($"/groups/details?group_id={g.group_id}")">@g.group_name</a>
+                    </li>
+                }
+            </ul>
+        }
+
         <div>
             <a href="@($"/directions/edit?direction_id={direction.direction_id}")">Edit</a> |
             <a href="@($"/directions")">Back to List</a>
@@ -30,6 +53,12 @@
 
 @code {
     private Direction? direction;
+
+    // Добавлено: список для хранения групп направления
+    private List<Group> groups = new();
+
+    // Добавлено для пункта 7
+    private int directionStudentsCount = 0;
 
     [SupplyParameterFromQuery]
     private int direction_id { get; set; }
@@ -42,6 +71,19 @@
         if (direction is null)
         {
             NavigationManager.NavigateTo("notfound");
+        }
+        else
+        {
+            // Добавлено: загрузка групп этого направления, отсортированных по названию
+            groups = await context.Groups
+                .Where(g => g.direction == direction_id)
+                .OrderBy(g => g.group_name)
+                .ToListAsync();
+
+            // Добавлено для пункта 7: считаем студентов направления
+            directionStudentsCount = await context.Students
+                .Include(s => s.Group)
+                .CountAsync(s => s.Group.direction == direction_id);
         }
     }
 }

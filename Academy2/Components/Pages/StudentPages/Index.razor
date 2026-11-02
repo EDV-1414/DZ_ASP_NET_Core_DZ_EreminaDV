@@ -4,54 +4,79 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Academy2.Models
 @using Academy2.Data
-@implements IAsyncDisposable
 @inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+
+@*
+Общая причина комментирования перечисленных ниже элементов: они относятся к прежнему режиму передачи данных через Items, который несовместим с ItemsProvider и Pagination. В режиме ItemsProvider данные берутся порциями через провайдер, контекст базы создаётся и освобождается на каждый запрос, а сортировка выполняется через ApplySorting.
+По этой причине закомментированы:
+1. @implements IAsyncDisposable в директивах страницы.
+2. Атрибут Items у QuickGrid с включением Group и Direction.
+3. Атрибут SortBy у TemplateColumn, связанный с полем sortBy.
+4. Поля context, sortBy и методы OnInitialized, DisposeAsync в блоке @code.
+*@
+
+@* @implements IAsyncDisposable *@
 
 <PageTitle>Index</PageTitle>
 
 <div class="controls">
 	<h1>Студенты</h1>
-
-	<p>
-		<a href="students/create" class="btn btn-primary">Добавить</a>
-	</p>
+	<p><a href="students/create" class="btn btn-primary">Добавить</a></p>
+	<div class="row mb-3">
+		<div class="col-md-6">
+			<input type="text" class="form-control" placeholder="Поиск по ФИО..." @bind="searchString" @bind:event="oninput" />
+		</div>
+	</div>
 </div>
 
-<QuickGrid Class="table" Items="context.Students.Include(s => s.Group).ThenInclude(g => g.Direction)">
-	@*  <PropertyColumn Property="student => student.last_name" />
-    <PropertyColumn Property="student => student.first_name" />
-    <PropertyColumn Property="student => student.middle_name" /> *@
-	@* <PropertyColumn Property="student => student.full_name" /> *@
+@* <QuickGrid Class="table" Items="context.Students.Include(s => s.Group).ThenInclude(g => g.Direction)"> *@
+<QuickGrid TGridItem="Student" Class="table" ItemsProvider="GetStudents" Pagination="@pagination">
 	<TemplateColumn Context="student"
 					Title="Студент"
-					Sortable="true"
-					SortBy="sortBy">
+					Sortable="true">
 		<a href="@($"students/details?stud_id={student.stud_id}")">@student.full_name</a>
 	</TemplateColumn>
 	<PropertyColumn Property="student => student.birth_date" Sortable="true" />
 	<PropertyColumn Property="student => student.Group.group_name" Sortable="true" />
 	<PropertyColumn Property="student => student.Group.Direction.direction_name" />
-	@*     <PropertyColumn Property="student => student.email" />
-    <PropertyColumn Property="student => student.phone" />
-    <PropertyColumn Property="student => student.photo" /> *@
-
-	@* <TemplateColumn Context="student">
-        <a href="@($"students/edit?stud_id={student.stud_id}")">Edit</a> |
-        <a href="@($"students/details?stud_id={student.stud_id}")">Details</a> |
-        <a href="@($"students/delete?stud_id={student.stud_id}")">Delete</a>
-    </TemplateColumn> *@
 </QuickGrid>
+
+<Paginator State="@pagination" />
 
 @code
 {
-	private AcademyContext context = default!;
+	// private AcademyContext context = default!;
+	// GridSort<Student> sortBy = GridSort<Student>.ByAscending(s => s.last_name);
 
-	GridSort<Student> sortBy = GridSort<Student>.ByAscending(s => s.last_name);
+	private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+	private string searchString = "";
 
-	protected override void OnInitialized()
+	// protected override void OnInitialized()
+	// {
+	// 	context = DbFactory.CreateDbContext();
+	// }
+
+	// public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+	private async ValueTask<GridItemsProviderResult<Student>> GetStudents(GridItemsProviderRequest<Student> request)
 	{
-		context = DbFactory.CreateDbContext();
-	}
+		using var context = DbFactory.CreateDbContext();
+		var query = context.Students.Include(s => s.Group).ThenInclude(g => g.Direction).AsQueryable();
 
-	public async ValueTask DisposeAsync() => await context.DisposeAsync();
+		if (!string.IsNullOrWhiteSpace(searchString))
+			query = query.Where(s =>
+				s.last_name.Contains(searchString) ||
+				s.first_name.Contains(searchString) ||
+				(s.middle_name != null && s.middle_name.Contains(searchString)));
+
+		if (request.SortByColumn != null)
+			query = request.ApplySorting(query);
+		else
+			query = query.OrderBy(s => s.last_name);
+
+		int totalCount = await query.CountAsync();
+		var items = await query.Skip(request.StartIndex).Take(request.Count ?? 10).ToListAsync();
+
+		return GridItemsProviderResult.From(items, totalCount);
+	}
 }
