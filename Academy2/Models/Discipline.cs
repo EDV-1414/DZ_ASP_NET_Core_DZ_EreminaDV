@@ -3,10 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Academy2.Models
 {
-    [Table("Disciplines")] 
+    [Table("Disciplines")]
     public class Discipline
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column(TypeName = "SMALLINT")]
         public int discipline_id { get; set; }
 
@@ -19,7 +20,10 @@ namespace Academy2.Models
         [Column(TypeName = "TINYINT")]
         public int number_of_lessons { get; set; }
 
-        //Navigation properties:
-        public ICollection<Teacher> Teachers { get; set; }
+        // Связь с преподавателями (оставили как было, но добавили инициализацию)
+        public ICollection<Teacher>? Teachers { get; set; } = new List<Teacher>();
+
+        // НОВОЕ: Связь с направлениями (многие ко многим)
+        public ICollection<Direction>? Directions { get; set; } = new List<Direction>();
     }
 }

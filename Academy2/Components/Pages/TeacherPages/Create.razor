@@ -1,0 +1,59 @@
+﻿@page "/teachers/create"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавить преподавателя</PageTitle>
+
+<h1>Добавить</h1>
+<h2>Преподаватель</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Teacher" OnValidSubmit="AddTeacher" FormName="create">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+
+            <div class="mb-3">
+                <label class="form-label">Фамилия:</label>
+                <InputText @bind-Value="Teacher.last_name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Имя:</label>
+                <InputText @bind-Value="Teacher.first_name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Отчество:</label>
+                <InputText @bind-Value="Teacher.middle_name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email:</label>
+                <InputText @bind-Value="Teacher.email" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ставка:</label>
+                <InputNumber @bind-Value="Teacher.rate" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </EditForm>
+    </div>
+</div>
+<div><a href="/teachers">Назад к списку</a></div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Teacher Teacher { get; set; } = new();
+
+    private async Task AddTeacher()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // В таблице Teachers есть IDENTITY, поэтому ID генерируется автоматически
+        context.Teachers.Add(Teacher);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/teachers", forceLoad: true);
+    }
+}

@@ -22,10 +22,22 @@
     <PropertyColumn Property="d => d.discipline_name" Title="Название дисциплины" Sortable="true" />
     <PropertyColumn Property="d => d.number_of_lessons" Title="Кол-во часов" Sortable="true" />
 
+    <!-- Новая колонка для отображения направлений -->
+    <TemplateColumn Title="Направления" Context="item">
+        @if (item.Directions != null && item.Directions.Any())
+        {
+            <span>@string.Join(", ", item.Directions.Select(d => d.direction_name))</span>
+        }
+        else
+        {
+            <span>—</span>
+        }
+    </TemplateColumn>
+
     <TemplateColumn Title="Действия" Context="item">
-        <a href="@($"disciplines/details?discipline_id={item.discipline_id}")">Детали</a>
-       @* <a href="@($"disciplines/edit?discipline_id={item.discipline_id}")">Изменить</a> |
-        <a href="@($"disciplines/delete?discipline_id={item.discipline_id}")">Удалить</a>*@
+        <a href="@($"disciplines/details?discipline_id={item.discipline_id}")">Детали</a> |
+        <a href="@($"disciplines/edit?discipline_id={item.discipline_id}")">Изменить</a> |
+        <a href="@($"disciplines/delete?discipline_id={item.discipline_id}")">Удалить</a>
     </TemplateColumn>
 </QuickGrid>
 
@@ -38,7 +50,9 @@
     private async ValueTask<GridItemsProviderResult<Discipline>> GetDisciplines(GridItemsProviderRequest<Discipline> request)
     {
         using var context = DbFactory.CreateDbContext();
-        var query = context.Disciplines.AsQueryable();
+
+        // Включаем направления, чтобы они отобразились в таблице
+        var query = context.Disciplines.Include(d => d.Directions).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchString))
             query = query.Where(d => d.discipline_name.Contains(searchString));

@@ -16,21 +16,38 @@ else
     <h1>@Discipline.discipline_name</h1>
     <hr />
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <EditForm method="post" Model="Discipline" OnValidSubmit="UpdateDiscipline" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
                 <ValidationSummary role="alert" />
                 <input type="hidden" name="Discipline.discipline_id" value="@Discipline.discipline_id" />
+
                 <div class="mb-3">
                     <label class="form-label">Название дисциплины:</label>
                     <InputText @bind-Value="Discipline.discipline_name" class="form-control" />
                     <ValidationMessage For="() => Discipline.discipline_name" class="text-danger" />
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label">Количество часов:</label>
                     <InputNumber @bind-Value="Discipline.number_of_lessons" class="form-control" />
                     <ValidationMessage For="() => Discipline.number_of_lessons" class="text-danger" />
                 </div>
+
+                <!-- Блок выбора направлений -->
+                <div class="mb-3">
+                    <label class="form-label">Направления обучения:</label>
+                    @foreach (var dir in allDirections)
+                    {
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="@($"dir_{dir.direction_id}")"
+                                   checked="@selectedDirectionIds.Contains(dir.direction_id)"
+                                   @onchange="e => ToggleDirection(dir.direction_id, (bool)e.Value!)" />
+                            <label class="form-check-label" for="@($"dir_{dir.direction_id}")">@dir.direction_name</label>
+                        </div>
+                    }
+                </div>
+
                 <button type="submit" class="btn btn-primary">Сохранить</button>
             </EditForm>
         </div>
@@ -45,44 +62,68 @@ else
     [SupplyParameterFromForm]
     private Discipline? Discipline { get; set; }
 
+    private List<Direction> allDirections = new();
+    private HashSet<int> selectedDirectionIds = new();
+
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        Discipline ??= await context.Disciplines.FirstOrDefaultAsync(m => m.discipline_id == discipline_id);
+
+        // Загружаем все направления для выбора
+        allDirections = await context.Directions.ToListAsync();
+
+        // Загружаем дисциплину вместе с её направлениями
+        Discipline ??= await context.Disciplines
+            .Include(d => d.Directions)
+            .FirstOrDefaultAsync(m => m.discipline_id == discipline_id);
 
         if (Discipline is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+        else
+        {
+            // Заполняем выбранные ID
+            foreach (var dir in Discipline.Directions)
+            {
+                selectedDirectionIds.Add(dir.direction_id);
+            }
+        }
+    }
+
+    private void ToggleDirection(int directionId, bool isChecked)
+    {
+        if (isChecked)
+            selectedDirectionIds.Add(directionId);
+        else
+            selectedDirectionIds.Remove(directionId);
     }
 
     private async Task UpdateDiscipline()
     {
         using var context = DbFactory.CreateDbContext();
-        context.Attach(Discipline!).State = EntityState.Modified;
 
-        try
+        // Обновляем список направлений у дисциплины
+        var disciplineToUpdate = await context.Disciplines
+            .Include(d => d.Directions)
+            .FirstOrDefaultAsync(d => d.discipline_id == Discipline!.discipline_id);
+
+        if (disciplineToUpdate != null)
         {
+            disciplineToUpdate.discipline_name = Discipline!.discipline_name;
+            disciplineToUpdate.number_of_lessons = Discipline.number_of_lessons;
+
+            // Очищаем старые связи и добавляем новые
+            disciplineToUpdate.Directions.Clear();
+            foreach (var id in selectedDirectionIds)
+            {
+                var dir = await context.Directions.FindAsync(id);
+                if (dir != null) disciplineToUpdate.Directions.Add(dir);
+            }
+
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!DisciplineExists(Discipline!.discipline_id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
-        }
 
-        NavigationManager.NavigateTo("/disciplines");
-    }
-
-    private bool DisciplineExists(int discipline_id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.Disciplines.Any(e => e.discipline_id == discipline_id);
+        NavigationManager.NavigateTo("/disciplines", forceLoad: true);
     }
 }

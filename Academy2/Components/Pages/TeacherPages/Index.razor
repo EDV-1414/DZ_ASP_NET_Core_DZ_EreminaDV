@@ -1,32 +1,59 @@
 ﻿@page "/teachers"
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Academy2.Models
 @using Academy2.Data
-@implements IAsyncDisposable
 @inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
 
-<PageTitle>Teachers</PageTitle>
+<PageTitle>Преподаватели</PageTitle>
 
 <div class="controls">
     <h1>Преподаватели (Teachers)</h1>
+    <p><a href="teachers/create" class="btn btn-primary">Добавить</a></p>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" placeholder="Поиск по фамилии..." @bind="searchString" @bind:event="oninput" />
+        </div>
+    </div>
 </div>
 
-<QuickGrid Class="table" Items="context.Teachers">
-    <PropertyColumn Property="t => t.last_name" Title="Фамилия" />
-    <PropertyColumn Property="t => t.first_name" Title="Имя" />
-    <PropertyColumn Property="t => t.middle_name" Title="Отчество" />
-    <PropertyColumn Property="t => t.email" Title="Email" />
-    <PropertyColumn Property="t => t.rate" Title="Ставка" />
+<QuickGrid TGridItem="Teacher" Class="table" ItemsProvider="GetTeachers" Pagination="@pagination">
+    <PropertyColumn Property="t => t.last_name" Title="Фамилия" Sortable="true" />
+    <PropertyColumn Property="t => t.first_name" Title="Имя" Sortable="true" />
+    <PropertyColumn Property="t => t.middle_name" Title="Отчество" Sortable="true" />
+    <PropertyColumn Property="t => t.email" Title="Email" Sortable="true" />
+    <PropertyColumn Property="t => t.rate" Title="Ставка" Sortable="true" />
+
+    <TemplateColumn Title="Действия" Context="item">
+        <a href="@($"teachers/details?teacher_id={item.teacher_id}")">Детали</a> |
+        <a href="@($"teachers/edit?teacher_id={item.teacher_id}")">Изменить</a> |
+        <a href="@($"teachers/delete?teacher_id={item.teacher_id}")">Удалить</a>
+    </TemplateColumn>
 </QuickGrid>
 
+<Paginator State="@pagination" />
+
 @code {
-    private AcademyContext context = default!;
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private string searchString = "";
 
-    protected override void OnInitialized()
+    private async ValueTask<GridItemsProviderResult<Teacher>> GetTeachers(GridItemsProviderRequest<Teacher> request)
     {
-        context = DbFactory.CreateDbContext();
-    }
+        using var context = DbFactory.CreateDbContext();
+        var query = context.Teachers.AsQueryable();
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+        if (!string.IsNullOrWhiteSpace(searchString))
+            query = query.Where(t => t.last_name.Contains(searchString) || t.first_name.Contains(searchString));
+
+        if (request.SortByColumn != null)
+            query = request.ApplySorting(query);
+        else
+            query = query.OrderBy(t => t.teacher_id);
+
+        int totalCount = await query.CountAsync();
+        var items = await query.Skip(request.StartIndex).Take(request.Count ?? 10).ToListAsync();
+
+        return GridItemsProviderResult.From(items, totalCount);
+    }
 }

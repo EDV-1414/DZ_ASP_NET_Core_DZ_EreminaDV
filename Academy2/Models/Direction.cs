@@ -10,6 +10,8 @@ namespace Academy2.Models
         //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("direction_id", TypeName = "TINYINT")]
         public int direction_id { get; set; }
+
+        [Required]
         public string? direction_name { get; set; }
 
         // Добавлено для пункта 7: количество групп и студентов (в БД не хранится)
@@ -18,5 +20,7 @@ namespace Academy2.Models
 
         [NotMapped]
         public int students_count { get; set; }
+
+        public ICollection<Discipline> Disciplines { get; set; } = new List<Discipline>();
     }
 }

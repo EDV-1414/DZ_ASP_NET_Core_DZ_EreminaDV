@@ -11,20 +11,37 @@
 <h2>Дисциплина</h2>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <EditForm method="post" Model="Discipline" OnValidSubmit="AddDiscipline" FormName="create">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
+
             <div class="mb-3">
                 <label class="form-label">Название дисциплины:</label>
                 <InputText @bind-Value="Discipline.discipline_name" class="form-control" />
                 <ValidationMessage For="() => Discipline.discipline_name" class="text-danger" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label">Количество часов:</label>
                 <InputNumber @bind-Value="Discipline.number_of_lessons" class="form-control" />
                 <ValidationMessage For="() => Discipline.number_of_lessons" class="text-danger" />
             </div>
+
+            <!-- Блок выбора направлений -->
+            <div class="mb-3">
+                <label class="form-label">Направления обучения:</label>
+                @foreach (var dir in allDirections)
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="@($"dir_{dir.direction_id}")"
+                               checked="@selectedDirectionIds.Contains(dir.direction_id)"
+                               @onchange="e => ToggleDirection(dir.direction_id, (bool)e.Value!)" />
+                        <label class="form-check-label" for="@($"dir_{dir.direction_id}")">@dir.direction_name</label>
+                    </div>
+                }
+            </div>
+
             <button type="submit" class="btn btn-primary">Создать</button>
         </EditForm>
     </div>
@@ -35,9 +52,35 @@
     [SupplyParameterFromForm]
     private Discipline Discipline { get; set; } = new();
 
+    private List<Direction> allDirections = new();
+    private HashSet<int> selectedDirectionIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        allDirections = await context.Directions.ToListAsync();
+    }
+
+    private void ToggleDirection(int directionId, bool isChecked)
+    {
+        if (isChecked)
+            selectedDirectionIds.Add(directionId);
+        else
+            selectedDirectionIds.Remove(directionId);
+    }
+
     private async Task AddDiscipline()
     {
         using var context = DbFactory.CreateDbContext();
+
+        // Привязываем выбранные направления к дисциплине
+        Discipline.Directions = new List<Direction>();
+        foreach (var id in selectedDirectionIds)
+        {
+            var dir = await context.Directions.FindAsync(id);
+            if (dir != null) Discipline.Directions.Add(dir);
+        }
+
         context.Disciplines.Add(Discipline);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/disciplines", forceLoad: true);

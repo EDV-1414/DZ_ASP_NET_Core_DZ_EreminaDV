@@ -1,0 +1,96 @@
+﻿@page "/teachers/edit"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактировать преподавателя</PageTitle>
+
+@if (Teacher is null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <h1>@Teacher.last_name @Teacher.first_name</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Teacher" OnValidSubmit="UpdateTeacher" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert" />
+                <input type="hidden" name="Teacher.teacher_id" value="@Teacher.teacher_id" />
+
+                <div class="mb-3">
+                    <label class="form-label">Фамилия:</label>
+                    <InputText @bind-Value="Teacher.last_name" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Имя:</label>
+                    <InputText @bind-Value="Teacher.first_name" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Отчество:</label>
+                    <InputText @bind-Value="Teacher.middle_name" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email:</label>
+                    <InputText @bind-Value="Teacher.email" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ставка:</label>
+                    <InputNumber @bind-Value="Teacher.rate" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </EditForm>
+        </div>
+    </div>
+}
+<div><a href="/teachers">Назад к списку</a></div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int teacher_id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Teacher? Teacher { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Teacher ??= await context.Teachers.FirstOrDefaultAsync(m => m.teacher_id == teacher_id);
+
+        if (Teacher is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateTeacher()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Teacher!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!TeacherExists(Teacher!.teacher_id))
+                NavigationManager.NavigateTo("notfound");
+            else
+                throw;
+        }
+
+        NavigationManager.NavigateTo("/teachers", forceLoad: true);
+    }
+
+    private bool TeacherExists(int teacher_id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Teachers.Any(e => e.teacher_id == teacher_id);
+    }
+}
