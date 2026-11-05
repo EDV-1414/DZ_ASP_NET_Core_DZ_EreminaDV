@@ -2,7 +2,7 @@
 {
 	public class TODO
 	{
-		public string Description { get; set; }
+		public string? Description { get; set; }
 		public bool DONE { get; set; }
 
 		public override bool Equals(object? other)

@@ -11,7 +11,7 @@ namespace Academy2.Models
 
         [Required]
         [StringLength(10, MinimumLength = 3)]
-        public string group_name { get; set; } = string.Empty;
+        public string? group_name { get; set; } = string.Empty;
 
         [Column("direction", TypeName = "TINYINT")]
         [ForeignKey(nameof(Direction))]
@@ -27,7 +27,7 @@ namespace Academy2.Models
         public DateOnly? start_date { get; set; }
 
         //Navigation properties:
-        public Direction Direction { get; set; } = null!;
+        public Direction? Direction { get; set; } = null!;
 
         // Добавлено для пункта 6: количество студентов в группе (вычисляется в коде, в БД не хранится)
         [NotMapped]

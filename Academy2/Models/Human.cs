@@ -9,13 +9,13 @@ namespace Academy2.Models
         [StringLength(50)]
         [DisplayName("Фамилия")]
         [RegularExpression(@"^[A-ZА-Я][a-zа-я]*$", ErrorMessage = "Строка содержит недопустимые символы")]
-        public string last_name { get; set; }
+        public string? last_name { get; set; }
 
         [Required]
         [StringLength(50)]
         [DisplayName("Имя")]
         [RegularExpression(@"^[A-ZА-Я][a-zа-я]*$", ErrorMessage = "Строка содержит недопустимые символы")]
-        public string first_name { get; set; }
+        public string? first_name { get; set; }
 
         [StringLength(50)]
         [DisplayName("Отчество")]

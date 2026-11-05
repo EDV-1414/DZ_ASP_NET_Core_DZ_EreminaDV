@@ -9,6 +9,7 @@ namespace Academy2.Data
 {
     public class AcademyContext : DbContext
     {
+        public DbSet<Academy2.Models.Discipline> Discipline { get; set; } = default!;
         public AcademyContext(DbContextOptions<AcademyContext> options)
             : base(options)
         {
@@ -18,5 +19,6 @@ namespace Academy2.Data
         public DbSet<Academy2.Models.Group> Groups { get; set; } = default!;
         public DbSet<Academy2.Models.Student> Students { get; set; } = default!;
         public DbSet<Academy2.Models.Teacher> Teachers { get; set; } = default!;
+        public DbSet<Academy2.Models.Discipline> Disciplines { get; set; } = default!;
     }
 }

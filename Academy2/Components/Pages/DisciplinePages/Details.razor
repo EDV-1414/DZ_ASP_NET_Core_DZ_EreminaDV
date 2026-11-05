@@ -1,0 +1,49 @@
+﻿@page "/disciplines/details"
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Детали дисциплины</PageTitle>
+
+<div>
+    @if (discipline is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else
+    {
+        <div class="controls">
+            <h1>@discipline.discipline_name</h1>
+            <a href="@($"/disciplines/edit?discipline_id={discipline.discipline_id}")" class="btn btn-primary">Изменить</a>
+        </div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">Название</dt>
+            <dd class="col-sm-10">@discipline.discipline_name</dd>
+            <dt class="col-sm-2">Количество часов</dt>
+            <dd class="col-sm-10">@discipline.number_of_lessons</dd>
+        </dl>
+        <div>
+            <a href="/disciplines">Назад к списку</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Discipline? discipline;
+
+    [SupplyParameterFromQuery]
+    private int discipline_id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        discipline = await context.Disciplines.FirstOrDefaultAsync(m => m.discipline_id == discipline_id);
+
+        if (discipline is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,56 @@
+﻿@page "/disciplines"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Academy2.Models
+@using Academy2.Data
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+
+<PageTitle>Дисциплины</PageTitle>
+
+<div class="controls">
+    <h1>Дисциплины (Disciplines)</h1>
+    <p><a href="disciplines/create" class="btn btn-primary">Добавить дисциплину</a></p>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" placeholder="Поиск по названию..." @bind="searchString" @bind:event="oninput" />
+        </div>
+    </div>
+</div>
+
+<QuickGrid TGridItem="Discipline" Class="table" ItemsProvider="GetDisciplines" Pagination="@pagination">
+    <PropertyColumn Property="d => d.discipline_name" Title="Название дисциплины" Sortable="true" />
+    <PropertyColumn Property="d => d.number_of_lessons" Title="Кол-во часов" Sortable="true" />
+
+    <TemplateColumn Title="Действия" Context="item">
+        <a href="@($"disciplines/details?discipline_id={item.discipline_id}")">Детали</a>
+       @* <a href="@($"disciplines/edit?discipline_id={item.discipline_id}")">Изменить</a> |
+        <a href="@($"disciplines/delete?discipline_id={item.discipline_id}")">Удалить</a>*@
+    </TemplateColumn>
+</QuickGrid>
+
+<Paginator State="@pagination" />
+
+@code {
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private string searchString = "";
+
+    private async ValueTask<GridItemsProviderResult<Discipline>> GetDisciplines(GridItemsProviderRequest<Discipline> request)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var query = context.Disciplines.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+            query = query.Where(d => d.discipline_name.Contains(searchString));
+
+        if (request.SortByColumn != null)
+            query = request.ApplySorting(query);
+        else
+            query = query.OrderBy(d => d.discipline_id);
+
+        int totalCount = await query.CountAsync();
+        var items = await query.Skip(request.StartIndex).Take(request.Count ?? 10).ToListAsync();
+
+        return GridItemsProviderResult.From(items, totalCount);
+    }
+}

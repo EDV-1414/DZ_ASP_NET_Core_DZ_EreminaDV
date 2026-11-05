@@ -13,6 +13,6 @@ namespace Academy2.Models
         public int group { get; set; }
 
         //Navigation properties:
-        public Group Group { get; set; }
+        public Group? Group { get; set; }
     }
 }

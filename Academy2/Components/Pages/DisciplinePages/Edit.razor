@@ -1,0 +1,88 @@
+﻿@page "/disciplines/edit"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактировать дисциплину</PageTitle>
+
+@if (Discipline is null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <h1>@Discipline.discipline_name</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Discipline" OnValidSubmit="UpdateDiscipline" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert" />
+                <input type="hidden" name="Discipline.discipline_id" value="@Discipline.discipline_id" />
+                <div class="mb-3">
+                    <label class="form-label">Название дисциплины:</label>
+                    <InputText @bind-Value="Discipline.discipline_name" class="form-control" />
+                    <ValidationMessage For="() => Discipline.discipline_name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Количество часов:</label>
+                    <InputNumber @bind-Value="Discipline.number_of_lessons" class="form-control" />
+                    <ValidationMessage For="() => Discipline.number_of_lessons" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </EditForm>
+        </div>
+    </div>
+}
+<div><a href="/disciplines">Назад к списку</a></div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int discipline_id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Discipline? Discipline { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Discipline ??= await context.Disciplines.FirstOrDefaultAsync(m => m.discipline_id == discipline_id);
+
+        if (Discipline is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateDiscipline()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Discipline!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!DisciplineExists(Discipline!.discipline_id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/disciplines");
+    }
+
+    private bool DisciplineExists(int discipline_id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Disciplines.Any(e => e.discipline_id == discipline_id);
+    }
+}

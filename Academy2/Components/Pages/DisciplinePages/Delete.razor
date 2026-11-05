@@ -1,0 +1,57 @@
+﻿@page "/disciplines/delete"
+@using Microsoft.EntityFrameworkCore
+@using Academy2.Models
+@inject IDbContextFactory<Academy2.Data.AcademyContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удалить дисциплину</PageTitle>
+
+<h1>Удалить</h1>
+<p>Вы уверены, что хотите удалить эту дисциплину?</p>
+<div>
+    @if (discipline is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else
+    {
+        <h2>@discipline.discipline_name</h2>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">Название</dt>
+            <dd class="col-sm-10">@discipline.discipline_name</dd>
+            <dt class="col-sm-2">Количество часов</dt>
+            <dd class="col-sm-10">@discipline.number_of_lessons</dd>
+        </dl>
+        <EditForm method="post" Model="discipline" OnValidSubmit="DeleteDiscipline" FormName="delete">
+            <button type="submit" class="btn btn-danger" disabled="@(discipline is null)">Удалить</button> |
+            <a href="/disciplines">Назад к списку</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Discipline? discipline;
+
+    [SupplyParameterFromQuery]
+    private int discipline_id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        discipline = await context.Disciplines.FirstOrDefaultAsync(m => m.discipline_id == discipline_id);
+
+        if (discipline is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteDiscipline()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Disciplines.Remove(discipline!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/disciplines");
+    }
+}

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Academy2.Models
 {
+    [Table("Disciplines")] 
     public class Discipline
     {
         [Key]
@@ -11,15 +12,14 @@ namespace Academy2.Models
 
         [Required]
         [StringLength(150)]
-        [Column(TypeName ="NVARCHAR(150)")]
+        [Column(TypeName = "NVARCHAR(150)")]
         public string discipline_name { get; set; }
 
         [Required]
-        [Column(TypeName ="TINYINT")]
+        [Column(TypeName = "TINYINT")]
         public int number_of_lessons { get; set; }
 
         //Navigation properties:
         public ICollection<Teacher> Teachers { get; set; }
-
     }
 }
